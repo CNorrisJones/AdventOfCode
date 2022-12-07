@@ -18,6 +18,14 @@ class RoShamBoDecider
     @input_file = input_file
   end
 
+  def puzzle_1_answer
+    score_matches_when_hand_fixed
+  end
+
+  def puzzle_2_answer
+    score_matches_when_outcome_fixed
+  end
+
   def score_matches_when_hand_fixed
     score = 0
     match_list.each do |match|

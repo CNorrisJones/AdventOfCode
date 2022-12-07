@@ -3,6 +3,14 @@ class CalorieCounter
     @input_file = input_file
   end
 
+  def puzzle_1_answer
+    find_most_food
+  end
+
+  def puzzle_2_answer
+    find_top_three_sum
+  end
+
   def find_most_food
     sum_calories.max()
   end
