@@ -1,14 +1,12 @@
-class CleanupPairs
-  def initialize(input_file)
-    @input_file = input_file
+class Puzzle
+  def initialize(input)
+    @input = input
   end
 
   def puzzle_1_answer
-
   end
 
   def puzzle_2_answer
-
   end
 
   private def file_contents
