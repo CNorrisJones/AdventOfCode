@@ -1,4 +1,4 @@
-class CalorieCounter
+class PuzzleSolver
   def initialize(input_file)
     @input_file = input_file
   end

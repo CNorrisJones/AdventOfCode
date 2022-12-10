@@ -1,4 +1,4 @@
-class RoShamBoDecider
+class PuzzleSolver
   HAND_FIXED_SHAPE_SCORE = { 'X' => 1, 'Y' => 2, 'Z' => 3 }.freeze
   HAND_FIXED_ROUND_SCORE = {
     'A' => { 'X' => 3, 'Y' => 6, 'Z' => 0 },
