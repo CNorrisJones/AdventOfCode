@@ -10,12 +10,19 @@ class PuzzleSolver
   end
 
   def puzzle_2_answer
+    find_smallest_directory_bigger_than_size
   end
 
   private def get_sum_of_small_directories
     root_node = RootNode.new
     directory_tree = DirectoryTree.new(instructions, root_node)
     directory_tree.find_sum_of_directories_equal_or_less_than_100_000
+  end
+
+  private def find_smallest_directory_bigger_than_size
+    root_node = RootNode.new
+    directory_tree = DirectoryTree.new(instructions, root_node)
+    directory_tree.find_smallest_directory_greater_than_8_381_165
   end
 
   private def instructions
@@ -87,6 +94,12 @@ class DirectoryTree
     end
 
     sum
+  end
+
+  def find_smallest_directory_greater_than_8_381_165
+    min_size = 30_000_000 - (70_000_000 - @root.size)
+
+    @directories.select { |directory| directory.size >= min_size }.min_by { |directory| directory.size }.size
   end
 
   private def parse_instruction(instruction)
