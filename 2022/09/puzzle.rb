@@ -110,35 +110,35 @@ class Rope
     if distance_from_knot_to_knot_in_front(knot) == 2
       knot.x_coord = (knot.x_coord + knot.in_front.x_coord) / 2
       knot.y_coord = (knot.y_coord + knot.in_front.y_coord) / 2
-    elsif knot.in_front.x_coord > knot.x_coord && knot.in_front.y_coord > knot.y_coord
+    elsif upper_right?(knot)
       knot.x_coord += 1
       knot.y_coord += 1
-    elsif knot.in_front.x_coord > knot.x_coord && knot.in_front.y_coord < knot.y_coord
+    elsif lower_right?(knot)
       knot.x_coord += 1
       knot.y_coord -= 1
-    elsif knot.in_front.x_coord < knot.x_coord && knot.in_front.y_coord > knot.y_coord
+    elsif upper_left?(knot)
       knot.x_coord -= 1
       knot.y_coord += 1
-    elsif knot.in_front.x_coord < knot.x_coord && knot.in_front.y_coord < knot.y_coord
+    elsif lower_left?(knot)
       knot.x_coord -= 1
       knot.y_coord -= 1
     end
   end
 
-  private def move_left_or_right(knot)
-    if knot.in_front.x_coord < knot.x_coord
-      -1
-    else
-      1
-    end
+  private def upper_right?(knot)
+    knot.in_front.x_coord > knot.x_coord && knot.in_front.y_coord > knot.y_coord
   end
 
-  private def move_up_or_down(knot)
-    if knot.in_front.y_coord < knot.y_coord
-      -1
-    else
-      1
-    end
+  private def lower_right?(knot)
+    knot.in_front.x_coord > knot.x_coord && knot.in_front.y_coord < knot.y_coord
+  end
+
+  private def upper_left?(knot)
+    knot.in_front.x_coord < knot.x_coord && knot.in_front.y_coord > knot.y_coord
+  end
+
+  private def lower_left?(knot)
+    knot.in_front.x_coord < knot.x_coord && knot.in_front.y_coord < knot.y_coord
   end
 
   private def mark_tail_location
