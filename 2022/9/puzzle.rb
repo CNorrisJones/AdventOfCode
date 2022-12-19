@@ -6,14 +6,15 @@ class PuzzleSolver
   end
 
   def puzzle_1_answer
-    determine_locations_rope_tail_has_been
+    determine_locations_rope_tail_has_been(1)
   end
 
   def puzzle_2_answer
+    determine_locations_rope_tail_has_been(9)
   end
 
-  private def determine_locations_rope_tail_has_been
-    rope = Rope.new
+  private def determine_locations_rope_tail_has_been(rope_length)
+    rope = Rope.new(rope_length)
 
     instructions.each do |instruction|
       rope.move_head(instruction)
@@ -34,9 +35,12 @@ end
 class Rope
   attr_accessor :head, :tail, :tail_locations
 
-  def initialize
-    @head = [0, 0]
-    @tail = [0, 0]
+  def initialize(rope_length)
+    @head = Knot.new(0, 0)
+
+    @tail = []
+
+    set_tail(rope_length)
 
     @tail_locations = Hash.new(0)
     mark_tail_location
@@ -52,98 +56,85 @@ class Rope
 
     distance.times do
       step_head(direction)
-      determine_tail_location(direction)
+      determine_knot_location
+    end
+  end
+
+  private def set_tail(rope_length)
+    knot_in_front = @head
+
+    rope_length.times do
+      current_knot = Knot.new(0, 0, in_front: knot_in_front)
+      knot_in_front.behind = current_knot
+      knot_in_front = current_knot
+      @tail << current_knot
     end
   end
 
   private def step_head(direction)
-    x_coord = @head.first
-    y_coord = @head.last
-
     case direction
     when "U"
-      y_coord += 1
-      @head = [x_coord, y_coord]
+      @head.y_coord += 1
     when "D"
-      y_coord -= 1
-      @head = [x_coord, y_coord]
+      @head.y_coord -= 1
     when "L"
-      x_coord -= 1
-      @head = [x_coord, y_coord]
+      @head.x_coord -= 1
     when "R"
-      x_coord += 1
-      @head = [x_coord, y_coord]
+      @head.x_coord += 1
     else
       raise ArgumentError, "Unexpected direction type given"
     end
   end
 
-  private def determine_tail_location(direction)
-    if distance_from_head_to_tail >= 2
-      move_tail(direction)
+  private def determine_tail_location
+    if distance_from_knot_to_knot_in_front(@tail[0]) >= 2
+      move_knot(@tail[0])
       mark_tail_location
     end
   end
 
-  private def distance_from_head_to_tail
-    Math.sqrt((@tail.first - @head.first) ** 2 + (@tail.last - @head.last) ** 2)
-  end
-
-  private def move_tail(direction)
-    x_coord = @tail.first
-    y_coord = @tail.last
-
-    if distance_from_head_to_tail == 2
-      case direction
-      when "U"
-        y_coord += 1
-        @tail = [x_coord, y_coord]
-      when "D"
-        y_coord -= 1
-        @tail = [x_coord, y_coord]
-      when "L"
-        x_coord -= 1
-        @tail = [x_coord, y_coord]
-      when "R"
-        x_coord += 1
-        @tail = [x_coord, y_coord]
-      else
-        raise ArgumentError, "Unexpected direction type given"
-      end
-    else
-      case direction
-      when "U"
-        x_coord += tail_left_or_right
-        y_coord += 1
-        @tail = [x_coord, y_coord]
-      when "D"
-        x_coord += tail_left_or_right
-        y_coord -= 1
-        @tail = [x_coord, y_coord]
-      when "L"
-        x_coord -= 1
-        y_coord += tail_up_or_down
-        @tail = [x_coord, y_coord]
-      when "R"
-        x_coord += 1
-        y_coord += tail_up_or_down
-        @tail = [x_coord, y_coord]
-      else
-        raise ArgumentError, "Unexpected direction type given"
+  private def determine_knot_location
+    @tail.each do |knot|
+      if distance_from_knot_to_knot_in_front(knot) >= 2
+        move_knot(knot)
+        mark_tail_location
       end
     end
   end
 
-  private def tail_left_or_right
-    if @head.first < @tail.first
+  private def distance_from_knot_to_knot_in_front(knot)
+    Math.sqrt((knot.x_coord - knot.in_front.x_coord) ** 2 + (knot.y_coord - knot.in_front.y_coord) ** 2)
+  end
+
+  private def move_knot(knot)
+    if distance_from_knot_to_knot_in_front(knot) == 2
+      knot.x_coord = (knot.x_coord + knot.in_front.x_coord) / 2
+      knot.y_coord = (knot.y_coord + knot.in_front.y_coord) / 2
+    elsif knot.in_front.x_coord > knot.x_coord && knot.in_front.y_coord > knot.y_coord
+      knot.x_coord += 1
+      knot.y_coord += 1
+    elsif knot.in_front.x_coord > knot.x_coord && knot.in_front.y_coord < knot.y_coord
+      knot.x_coord += 1
+      knot.y_coord -= 1
+    elsif knot.in_front.x_coord < knot.x_coord && knot.in_front.y_coord > knot.y_coord
+      knot.x_coord -= 1
+      knot.y_coord += 1
+    elsif knot.in_front.x_coord < knot.x_coord && knot.in_front.y_coord < knot.y_coord
+      knot.x_coord -= 1
+      knot.y_coord -= 1
+    end
+  end
+
+  private def move_left_or_right(knot)
+    if knot.in_front.x_coord < knot.x_coord
       -1
     else
       1
     end
   end
 
-  private def tail_up_or_down
-    if @head.last < @tail.last
+  private def move_up_or_down(knot)
+    if knot.in_front.y_coord < knot.y_coord
       -1
     else
       1
@@ -151,6 +142,21 @@ class Rope
   end
 
   private def mark_tail_location
-    @tail_locations[@tail] = 1
+    @tail_locations[@tail.last.current_location] = 1
+  end
+end
+
+class Knot
+  attr_accessor :x_coord, :y_coord, :in_front, :behind
+
+  def initialize(x_coord, y_coord, in_front: nil, behind: nil)
+    @x_coord = x_coord
+    @y_coord = y_coord
+    @in_front = in_front
+    @behind = behind
+  end
+
+  def current_location
+    [@x_coord, @y_coord]
   end
 end
