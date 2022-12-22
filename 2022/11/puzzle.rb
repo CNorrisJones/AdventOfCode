@@ -10,10 +10,15 @@ class PuzzleSolver
   end
 
   def puzzle_2_answer
+    find_monkey_business_after_ten_thousand_rounds
   end
 
   private def find_monkey_business_after_twenty_rounds
-    MonkeyTroop.new(file_contents, 20).get_monkey_business
+    MonkeyTroop.new(file_contents, 20, 3, 96577).get_monkey_business
+  end
+
+  private def find_monkey_business_after_ten_thousand_rounds
+    MonkeyTroop.new(file_contents, 10000, 1, 9699690).get_monkey_business
   end
 
   private def file_contents
@@ -22,9 +27,11 @@ class PuzzleSolver
 end
 
 class MonkeyTroop
-  def initialize(input, number_of_rounds)
+  def initialize(input, number_of_rounds, worry, divisor)
     @input = input
     @number_of_rounds = number_of_rounds
+    @worry = worry
+    @divisor = divisor
   end
 
   def get_monkey_business
@@ -33,7 +40,8 @@ class MonkeyTroop
   end
 
   private def simulate_rounds
-    @number_of_rounds.times do
+    @number_of_rounds.times do |round|
+      puts "Round: #{round}"
       simulate_round
     end
   end
@@ -42,16 +50,6 @@ class MonkeyTroop
     monkeys.each do |monkey|
       monkey.handle_items
     end
-
-    monkeys_items
-  end
-
-  private def monkeys_items
-    puts "\n"
-    monkeys.each_with_index do |monkey, i|
-      puts "Monkey #{i}: #{monkey.items}. Inspection Count: #{monkey.inspection_count}"
-    end
-    puts "\n"
   end
 
   private def monkeys
@@ -76,7 +74,9 @@ class MonkeyTroop
         test_val: test_val,
         true_monkey: true_monkey,
         false_monkey: false_monkey,
-        monkey_troop: monkeys
+        monkey_troop: monkeys,
+        worry: @worry,
+        divisor: @divisor
       )
     end
 
@@ -85,11 +85,9 @@ class MonkeyTroop
 end
 
 class Monkey
-  WORRY_DIVISOR = 3
-
   attr_reader :items, :inspection_count
 
-  def initialize(starting_items:, operation_val:, operation_symbol:, test_val:, true_monkey:, false_monkey:, monkey_troop:)
+  def initialize(starting_items:, operation_val:, operation_symbol:, test_val:, true_monkey:, false_monkey:, monkey_troop:, worry:, divisor:)
     @items = starting_items
     @operation_val = operation_val
     @operation_symbol = operation_symbol
@@ -97,6 +95,8 @@ class Monkey
     @true_monkey = true_monkey
     @false_monkey = false_monkey
     @monkey_troop = monkey_troop
+    @worry = worry
+    @divisor = divisor
     @inspection_count = 0
   end
 
@@ -104,8 +104,8 @@ class Monkey
     until @items.empty?
       item = @items.shift
       item = inspect_item(item)
-      item = item / WORRY_DIVISOR
-      puts "Monkey gets bored with item. Worry level is divided by #{WORRY_DIVISOR} to #{item}"
+      item = pass_test?(item) ? item : item % @divisor
+      item = item / @worry
       throw(item)
     end
   end
@@ -115,11 +115,9 @@ class Monkey
   end
 
   private def inspect_item(item)
-    puts "Monkey inspects an item with worry level of #{item}"
     value = @operation_val == "old" ? item : @operation_val.to_i
 
     item = item.send(@operation_symbol, value)
-    puts "Worry level is #{@operation_symbol} by #{@operation_val} to #{item}"
 
     @inspection_count += 1
     item
@@ -127,12 +125,8 @@ class Monkey
 
   private def throw(item)
     if pass_test?(item)
-      puts "Current worry level is divisible by #{@test_val}."
-      puts "Item with worry level #{item} is thrown to monkey #{@true_monkey}"
       @monkey_troop[@true_monkey].catch(item)
     else
-      puts "Current worry level is not divisible by #{@test_val}"
-      puts "Item with worry level #{item} is thrown to monkey #{@false_monkey}"
       @monkey_troop[@false_monkey].catch(item)
     end
   end
