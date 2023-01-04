@@ -1,4 +1,5 @@
 require "pry"
+require "time"
 
 class PuzzleSolver
   def initialize(input)
@@ -6,15 +7,22 @@ class PuzzleSolver
   end
 
   def puzzle_1_answer
+    start = Time.now
     find_shortest_path_from_start_to_finish
+    finish = Time.now
+
+    elapsed = finish - start
+    puts "Time to run is roughly #{elapsed}"
   end
 
   def puzzle_2_answer
   end
 
   private def find_shortest_path_from_start_to_finish
-    start_node = StartNode.new(0, 0, 0)
-    end_node = PathNode.new(2, 5, 0, Float::INFINITY)
+    # start_node = StartNode.new(0, 0, 1)
+    # end_node = PathNode.new(5, 2, 26, Float::INFINITY)
+    start_node = StartNode.new(0, 20, 1)
+    end_node = PathNode.new(58, 20, 26, Float::INFINITY)
 
     PathFinder.new(file_contents, start_node, end_node).find_shortest_path
   end
@@ -35,24 +43,40 @@ class PathFinder
     @end_node = end_node
 
     @height_map = HeightMap.new(@input, @start_node, @end_node)
-    @visited_nodes = [@start_node]
+    @visited_nodes = []
     @path_queue = [@start_node]
   end
 
   def find_shortest_path
-    puts "hi"
+    travel_paths
+
+    @end_node.path_value
   end
 
   private def travel_paths
-    @path_queue.each do |node|
+    until @path_queue.empty?
+      node = @path_queue.shift
 
+      @height_map.neighbours(node).each do |neighbour|
+        if node.can_climb_to?(neighbour)
+          if neighbour.path_value > node.path_value
+            neighbour.path_value = (node.path_value + 1)
+          end
+
+          unless @visited_nodes.include?(neighbour) || @path_queue.include?(neighbour)
+            @path_queue.append(neighbour)
+          end
+        end
+      end
+
+      @visited_nodes.append(node)
     end
   end
 end
 
 class HeightMap
   HEIGHTCONVERTOR = {
-    "S" => 0, "E" => 0,
+    "S" => 1, "E" => 26,
     "a" => 1, "b" => 2, "c" => 3, "d" => 4, "e" => 5, "f" => 6, "g" => 7,
     "h" => 8, "i" => 9, "j" => 10, "k" => 11,  "l" => 12, "m" => 13, "n" => 14,
     "o" => 15, "p" => 16, "q" => 17, "r" => 18, "s" => 19, "t" => 20, "u" => 21,
@@ -71,9 +95,9 @@ class HeightMap
   def set_height_map
     hash_map = {}
 
-    @input.split("\n").each_with_index do |row, row_num|
-      row.split("").each_with_index do |col, col_num|
-        height = HEIGHTCONVERTOR[col]
+    @input.split("\n").each_with_index do |col, col_num|
+      col.split("").each_with_index do |row, row_num|
+        height = HEIGHTCONVERTOR[row]
         hash_map[[row_num, col_num]] = PathNode.new(row_num, col_num, height, Float::INFINITY)
       end
     end
@@ -109,7 +133,7 @@ class PathNode
     [@x_coord, @y_coord]
   end
 
-  def climbable?(node)
+  def can_climb_to?(node)
     node.height <= (height + 1)
   end
 end
