@@ -1,5 +1,4 @@
 require "pry"
-require "time"
 
 class PuzzleSolver
   def initialize(input)
@@ -7,15 +6,11 @@ class PuzzleSolver
   end
 
   def puzzle_1_answer
-    start = Time.now
     find_shortest_path_from_start_to_finish
-    finish = Time.now
-
-    elapsed = finish - start
-    puts "Time to run is roughly #{elapsed}"
   end
 
   def puzzle_2_answer
+    find_shortest_starting_point
   end
 
   private def find_shortest_path_from_start_to_finish
@@ -25,6 +20,15 @@ class PuzzleSolver
     end_node = PathNode.new(58, 20, 26, Float::INFINITY)
 
     PathFinder.new(file_contents, start_node, end_node).find_shortest_path
+  end
+
+  private def find_shortest_starting_point
+    # start_node = StartNode.new(0, 0, 1)
+    # end_node = PathNode.new(5, 2, 26, 0)
+    start_node = StartNode.new(0, 20, 1)
+    end_node = PathNode.new(58, 20, 26, 0)
+
+    PathFinder.new(file_contents, start_node, end_node).find_shortest_start_point
   end
 
   private def file_contents
@@ -53,12 +57,44 @@ class PathFinder
     @end_node.path_value
   end
 
+  def find_shortest_start_point
+    best_start = reverse_travel_paths
+
+    best_start.path_value
+  end
+
   private def travel_paths
     until @path_queue.empty?
       node = @path_queue.shift
 
       @height_map.neighbours(node).each do |neighbour|
-        if node.can_climb_to?(neighbour)
+        if node.can_climb_up?(neighbour)
+          if neighbour.path_value > node.path_value
+            neighbour.path_value = (node.path_value + 1)
+          end
+
+          unless @visited_nodes.include?(neighbour) || @path_queue.include?(neighbour)
+            @path_queue.append(neighbour)
+          end
+        end
+      end
+
+      @visited_nodes.append(node)
+    end
+  end
+
+  private def reverse_travel_paths
+    @path_queue = [@end_node]
+
+    until @path_queue.empty?
+      node = @path_queue.shift
+
+      if node.height == 1
+        return node
+      end
+
+      @height_map.neighbours(node).each do |neighbour|
+        if node.can_climb_down?(neighbour)
           if neighbour.path_value > node.path_value
             neighbour.path_value = (node.path_value + 1)
           end
@@ -133,8 +169,12 @@ class PathNode
     [@x_coord, @y_coord]
   end
 
-  def can_climb_to?(node)
+  def can_climb_up?(node)
     node.height <= (height + 1)
+  end
+
+  def can_climb_down?(node)
+    node.height >= (height - 1)
   end
 end
 
